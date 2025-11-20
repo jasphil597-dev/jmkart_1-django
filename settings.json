@@ -1,0 +1,38 @@
+{
+	"editor.formatOnSave": true,
+	"editor.tabSize": 4,
+	"editor.detectIndentation": false,
+	"files.trimTrailingWhitespace": true,
+	"files.insertFinalNewline": true,
+
+	"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+	"python.formatting.provider": "black",
+	"[python]": {
+		"editor.defaultFormatter": "ms-python.black-formatter",
+		"editor.formatOnSave": true
+	},
+	"python.analysis.typeCheckingMode": "basic",
+	"python.linting.enabled": true,
+	"python.linting.flake8Enabled": true,
+
+	"files.exclude": {
+		"**/__pycache__": true,
+		"**/*.pyc": true,
+		"**/migrations": false
+	},
+
+	// Associate Django template files
+	"files.associations": {
+		"**/templates/**/*.html": "django-html"
+	},
+	// Set formatter for django-html
+	"[django-html]": {
+		"editor.defaultFormatter": "monosans.djlint",
+		"editor.formatOnSave": true
+	},
+	// Still use Prettier for standard HTML
+	"[html]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	}
+}
