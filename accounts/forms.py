@@ -1,4 +1,5 @@
 from django import forms
+from typing import Dict, Any
 from .models import Account
 
 
@@ -25,6 +26,16 @@ class RegistrationForm(forms.ModelForm):
             "password",
         ]
 
+    def clean(self):
+        clean_data = super(RegistrationForm, self).clean()
+        password = clean_data.get("password") # type: ignore
+        confirm_password = clean_data.get("confirm_password") # type: ignore
+
+        if password != confirm_password:
+            raise forms.ValidationError('Password does not match!')
+
+        return clean_data
+
     def __init__(self, *args, **kwargs):
         super(RegistrationForm, self).__init__(*args, **kwargs)
         self.fields["first_name"].widget.attrs["placeholder"] = "Enter First Name"
@@ -33,3 +44,4 @@ class RegistrationForm(forms.ModelForm):
         self.fields["email"].widget.attrs["placeholder"] = "Enter Email Address"
         for field in self.fields:
             self.fields[field].widget.attrs["class"] = "form-control"
+
