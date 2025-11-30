@@ -1,0 +1,10 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>CSRF Test</h1>
+    <form method="POST">
+      {% csrf_token %}
+      <button type="submit">Submit</button>
+    </form>
+  </body>
+</html>
