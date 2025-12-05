@@ -14,6 +14,12 @@ from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
 
+from carts.views import cart_id
+from carts.models import Cart, CartItem
+from django.contrib import auth, messages
+import requests
+
+
 # ==============
 
 
@@ -64,6 +70,9 @@ def register(request):
     return render(request, "accounts/register.html", context)
 
 
+# ================================================================
+
+
 def login(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -72,19 +81,77 @@ def login(request):
         user = auth.authenticate(request, username=email, password=password)
 
         if user is not None:
+            try:
+                # Get the guest cart (session-based)
+                cart = Cart.objects.get(cart_id=cart_id(request))
+            except Cart.DoesNotExist:
+                cart = None
+
+            if cart:
+                # All items currently in the session cart
+                cart_items = CartItem.objects.filter(cart=cart)
+
+                for item in cart_items:
+                    product = item.product
+                    product_variation = list(item.variations.all())
+
+                    # Check if this user already has the same product in their cart
+                    user_cart_items = CartItem.objects.filter(
+                        user=user,
+                        product=product,
+                    )
+
+                    if user_cart_items.exists():
+                        ex_var_list = []
+                        ids = []
+
+                        for user_item in user_cart_items:
+                            existing_variation = user_item.variations.all()
+                            ex_var_list.append(list(existing_variation))
+                            ids.append(user_item.id)  # type: ignore
+
+                        if product_variation in ex_var_list:
+                            # Same variation exists for this user → increase quantity
+                            index = ex_var_list.index(product_variation)
+                            existing_item = CartItem.objects.get(id=ids[index])
+                            existing_item.quantity += item.quantity
+                            existing_item.save()
+                            # Optionally delete the old guest item
+                            item.delete()
+                        else:
+                            # New variation for this user → reassign to user
+                            item.user = user
+                            item.cart = None
+                            item.save()
+                    else:
+                        # No cart items for this product yet → reassign to user
+                        item.user = user
+                        item.cart = None
+                        item.save()
+
+            # Finally log the user in
             auth.login(request, user)
+            url = request.META.get("HTTP_REFERER")
             messages.success(request, "You are now logged in.")
-            return redirect("dashboard")
+            try:
+                query = requests.utils.urlparse(url).query  # type: ignore
+                # next=/cart/checkout/
+                params = dict(x.split("=") for x in query.split("&"))
+                if "next" in params:
+                    nextPage = params["next"]
+                    return redirect(nextPage)
+            except:
+                return redirect("dashboard")
+
         else:
             messages.error(request, "Invalid login credentials")
             return redirect("login")
-
     return render(request, "accounts/login.html")
 
 
 @login_required(login_url="login")
 def logout(request):
-    auth_logout(request)
+    auth.logout(request)
     messages.success(request, "You are logged out.")
     return redirect("login")
 

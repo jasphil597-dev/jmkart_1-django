@@ -1,18 +1,33 @@
+# carts/context_processors.py
+
 from .models import Cart, CartItem
-from .views import cart_id
+from .views import cart_id  # make sure this import path is correct
 
 
 def counter(request):
-  cart_count = 0
-  if 'admin' in request.path:
-    return{}
-  else:
+    cart_count = 0
+
+    # Avoid running this in admin pages
+    if "admin" in request.path:
+        return {}
+
     try:
-      cart = Cart.objects.filter(cart_id=cart_id(request))
-      cart_items = CartItem.objects.all().filter(cart=cart[:1])
-      for cart_item in cart_items:
-        cart_count += cart_count + cart_item.quantity
-        
-    except Cart.DoesNotExist:
-      cart_count = 0
-  return dict(cart_count=cart_count)
+        if request.user.is_authenticated:
+            cart_items = CartItem.objects.filter(
+                user=request.user,
+                is_active=True,
+            )
+        else:
+            cart = Cart.objects.get(cart_id=cart_id(request))
+            cart_items = CartItem.objects.filter(
+                cart=cart,
+                is_active=True,
+            )
+
+        for item in cart_items:
+            cart_count += item.quantity  # ✅ only quantity, NOT id
+
+    except (Cart.DoesNotExist, CartItem.DoesNotExist):
+        cart_count = 0
+
+    return dict(cart_count=cart_count)
