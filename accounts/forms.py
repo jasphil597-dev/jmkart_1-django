@@ -28,11 +28,11 @@ class RegistrationForm(forms.ModelForm):
 
     def clean(self):
         clean_data = super(RegistrationForm, self).clean()
-        password = clean_data.get("password") # type: ignore
-        confirm_password = clean_data.get("confirm_password") # type: ignore
+        password = clean_data.get("password")  # type: ignore
+        confirm_password = clean_data.get("confirm_password")  # type: ignore
 
         if password != confirm_password:
-            raise forms.ValidationError('Password does not match!')
+            raise forms.ValidationError("Password does not match!")
 
         return clean_data
 
@@ -44,4 +44,3 @@ class RegistrationForm(forms.ModelForm):
         self.fields["email"].widget.attrs["placeholder"] = "Enter Email Address"
         for field in self.fields:
             self.fields[field].widget.attrs["class"] = "form-control"
-
