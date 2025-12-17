@@ -2,6 +2,7 @@ from django.db import models
 from category.models import Category
 from django.urls import reverse
 from accounts.models import Account
+from django.db.models import Avg, Count
 
 # Create your models here.
 
@@ -22,6 +23,56 @@ class Product(models.Model):
 
   def __str__(self):
       return self.product_name
+
+  def averageReview(self):
+      reviews = ReviewRating.objects.filter(
+          product=self,
+          status=True
+      ).aggregate(avg_rating=Avg('rating'))
+
+      avg = reviews['avg_rating']
+      if avg is None:
+          return 0
+      return round(float(avg), 1)
+
+  def countReview(self):
+      reviews = ReviewRating.objects.filter(
+          product=self,
+          status=True
+      ).aggregate(count=Count('id'))
+
+      count = reviews.get('count')
+      if count is None:
+          return 0
+      return int(count)
+
+
+
+
+#   def averageReview(self):
+#     reviews = ReviewRating.objects.filter(product=self, status=True).aggregate(avg=Avg("rating"))
+#     avg = reviews["avg"]
+#     return round(float(avg), 1) if avg is not None else 0
+
+#   def averageReview(self):
+#     reviews = ReviewRating.objects.filter(
+#         product=self,
+#         status=True
+#     ).aggregate(avg_rating=Avg('rating'))
+
+#     avg = reviews['avg_rating']
+
+#     if avg is None:
+#         return 0
+
+#     return round(float(avg), 1)
+
+#   def averageReview(self):
+#       reviews = ReviewRating.objects.filter(product=self, status=True).aggregate(average=Avg('rating'))
+#       Avg = 0
+#       if reviews['average'] is not None:
+#           avg = float(reviews['average'])
+#       return avg
 
 class VariationManager(models.Manager):
   def colors(self):
