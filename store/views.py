@@ -2,7 +2,7 @@ from pyexpat.errors import messages
 from django.shortcuts import redirect, render, get_object_or_404
 
 from orders.models import OrderProduct
-from .models import Product, ReviewRating
+from .models import Product, ReviewRating, ProductGallery
 from category.models import Category
 from carts.models import CartItem
 from django.db.models import Q
@@ -58,17 +58,21 @@ def product_detail(request, category_slug, product_slug):
     if request.user.is_authenticated:
         orderproduct = OrderProduct.objects.filter(
             user_id=request.user.id,
-            product_id=single_product.id,
+            product_id=single_product.id, # type: ignore
         ).exists()
 
     # Getting the reviews
-    reviews = ReviewRating.objects.filter(product_id=single_product.id, status=True)  # turn False if you don't want review to show
+    reviews = ReviewRating.objects.filter(product_id=single_product.id, status=True)  # type: ignore # turn False if you don't want review to show
+
+    # Get the product gallery
+    product_gallery = ProductGallery.objects.filter(product_id=single_product.id) # type: ignore
 
     context = {
         "single_product": single_product,
         "in_cart": in_cart,
         "orderproduct": orderproduct,
         'reviews': reviews,
+        'product_gallery': product_gallery,
     }
     return render(request, "store/product_detail.html", context)
 
